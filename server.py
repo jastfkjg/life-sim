@@ -12,8 +12,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
-CORS(app)
+app = Flask(__name__, static_folder='.', static_url_path='')
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 # 支持的Provider
 PROVIDERS = {
@@ -75,33 +76,39 @@ def build_event_prompt(age, stats, history):
     recent = history[-5:] if history else ["刚成年"]
     history_text = "\n".join([f"- {h}" for h in recent])
 
-    prompt = f"""你是一个人生模拟游戏的事件生成器。
-
-当前角色状态：
-- 年龄：{age}岁
-- 属性：{stats_text}
-
-最近经历：
-{history_text}
-
-请生成一个人生事件，要求：
-1. 事件类型要多样（机会/挑战/意外/人际/选择等）
-2. 要和当前状态有关（某属性过低时生成相关事件）
-3. 考虑属性间的关联（如金钱低→健康差，孤独高→快乐低）
-4. 每个选择要有权衡，没有绝对正确答案
-
-输出严格的JSON格式：
-{{
-  "event": "事件描述，40-60字，要生动具体，有画面感",
-  "choices": [
-    {{"text": "选择1描述", "effects": {{"hp": 0, "money": 0, "happiness": 0, "career": 0, "social": 0, "family": 0, "friends": 0, "love": 0, "loneliness": 0, "freedom": 0, "sanity": 0}}}},
-    {{"text": "选择2描述", "effects": {{"hp": 0, "money": 0, "happiness": 0, "career": 0, "social": 0, "family": 0, "friends": 0, "love": 0, "loneliness": 0, "freedom": 0, "sanity": 0}}}},
-    {{"text": "选择3描述", "effects": {{"hp": 0, "money": 0, "happiness": 0, "career": 0, "social": 0, "family": 0, "friends": 0, "love": 0, "loneliness": 0, "freedom": 0, "sanity": 0}}}}
-  ]
-}}
-
-注意：effects中0表示无变化，正数增加，负数减少。每个选择的effects总和应接近0（资源守恒）。
-直接输出JSON，不要有任何前缀。"""
+    prompt = (
+        f"你是一个人生模拟游戏的事件生成器。\n\n"
+        f"当前角色状态：\n"
+        f"- 年龄：{age}岁\n"
+        f"- 属性：{stats_text}\n\n"
+        f"最近经历：\n{history_text}\n\n"
+        "你必须生成一个多样化的人生事件。事件类型包括：\n"
+        "- 学业/教育：高考、考研、出国、留学、专业选择\n"
+        "- 事业/工作：求职、升职、加薪、跳槽、创业、失业\n"
+        "- 爱情/婚姻：邂逅、恋爱、表白、结婚、分手、离婚\n"
+        "- 友情/社交：结交朋友、友情破裂、人际纠纷、社交活动\n"
+        "- 家庭/亲情：与父母关系、生病照顾、家庭矛盾、亲子教育\n"
+        "- 意外/突发：车祸、疾病、自然灾害、飞来横祸\n"
+        "- 爱好/娱乐：培养兴趣、旅行、游戏、运动、追星\n"
+        "- 人生抉择：重大决定、理想与现实、道德困境\n"
+        "- 财务/投资：彩票中奖、投资亏损、意外收入、财务危机\n"
+        "- 健康/生活：作息紊乱、身体报警、养成习惯、戒除恶习\n\n"
+        "要求：\n"
+        "1. 不要连续生成同一类型事件（查看最近经历避免重复）\n"
+        "2. 选项数量由你决定（1-5个），根据事件复杂度灵活设置\n"
+        "3. 每个选项描述要具体真实，不要泛泛而谈\n"
+        "4. 选项可以只影响后续剧情，不一定有属性变化\n"
+        "5. 选项可以有无关属性的（如只是休闲选择）\n"
+        "6. 事件描述要50-80字，有画面感\n\n"
+        "输出严格的JSON格式，不要有任何前缀或解释：\n"
+        "{\"event\": \"事件描述...\",\n"
+        " \"choices\": [\n"
+        "   {\"text\": \"选项1具体描述\", \"effects\": {}},\n"
+        "   {\"text\": \"选项2具体描述\", \"effects\": {}},\n"
+        "   {\"text\": \"选项3具体描述\", \"effects\": {}}\n"
+        " ]\n"
+        "}"
+    )
 
     return prompt
 
@@ -172,11 +179,11 @@ def generate_event():
         if not result or "event" not in result or "choices" not in result:
             # Fallback
             result = {
-                "event": "你面临一个人生的重要抉择...",
+                "event": "大学毕业季，你收到了几家公司的offer，面临选择...",
                 "choices": [
-                    {"text": "稳妥保守", "effects": {"hp": 0, "money": -5, "happiness": 5, "career": -5, "social": 0, "family": 0, "friends": 0, "love": 0, "loneliness": 0, "freedom": -10, "sanity": 0}},
-                    {"text": "冒险一搏", "effects": {"hp": -5, "money": 15, "happiness": 0, "career": 10, "social": -5, "family": 0, "friends": 0, "love": 0, "loneliness": 5, "freedom": 10, "sanity": 0}},
-                    {"text": "社交拓展", "effects": {"hp": 0, "money": -10, "happiness": 10, "career": 0, "social": 15, "family": 0, "friends": 10, "love": 0, "loneliness": -10, "freedom": 0, "sanity": 0}}
+                    {"text": "接受北京某互联网公司offer，薪资高但加班多", "effects": {"money": 20, "happiness": -5, "loneliness": 10}},
+                    {"text": "留在家乡小城，接受稳定的国企工作", "effects": {"family": 15, "money": 5, "career": -10}},
+                    {"text": "去上海闯荡，追求更大发展机会", "effects": {"career": 15, "money": 10, "loneliness": 15}}
                 ]
             }
 

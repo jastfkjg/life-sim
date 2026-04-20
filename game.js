@@ -1,6 +1,7 @@
 // Life Sim - Game Logic
 
-const API_URL = "http://localhost:5000/api";
+// 获取当前页面的origin，用于API请求
+const API_URL = window.location.origin + "/api";
 
 let gameState = {
     name: "",
@@ -42,8 +43,8 @@ function startGame() {
         alert("请输入你的名字");
         return;
     }
-    if (age < 18 || age > 30) {
-        alert("年龄需要在18-30之间");
+    if (age < 1 || age >= 60) {
+        alert("年龄需要在1-59之间");
         return;
     }
 
@@ -210,13 +211,12 @@ function displayEvent(data) {
     const container = $("choices-container");
     container.innerHTML = "";
 
-    data.choices.forEach((choice, index) => {
+    const choices = data.choices || [];
+    choices.forEach((choice, index) => {
         const btn = document.createElement("button");
         btn.className = "choice-btn";
-        btn.innerHTML = `
-            <div class="choice-text">${choice.text}</div>
-            <div class="effects">${formatEffects(choice.effects)}</div>
-        `;
+        const num = index + 1;
+        btn.innerHTML = `<div class="choice-text">${num}. ${choice.text}</div>`;
         btn.onclick = () => makeChoice(choice);
         container.appendChild(btn);
     });
