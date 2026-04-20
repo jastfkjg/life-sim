@@ -63,26 +63,42 @@ def call_llm(messages, temperature=0.9, max_tokens=1000):
     return response.choices[0].message.content
 
 
-def build_event_prompt(age, stats, history):
+def build_event_prompt(age, stats, history, world="modern"):
     labels = {
         "hp": "健康", "money": "金钱", "happiness": "快乐", "career": "事业",
         "social": "社交", "family": "家庭", "friends": "朋友", "love": "爱情",
         "loneliness": "孤独", "freedom": "自由", "sanity": "精神"
     }
 
+    # 世界设定约束
+    world_constraints = {
+        "modern": "故事发生在现代都市，有手机、互联网、外卖、共享单车等现代生活方式。",
+        "tang": "故事发生在唐朝长安，要符合唐朝历史背景：科举取士、长安城坊市制度、丝绸之路、文人墨客。不要出现现代事物。",
+        "ming": "故事发生在明朝，要符合明朝历史背景：科举制度、锦衣卫、市井生活、郑和下西洋。不要出现现代事物。",
+        "wwii": "故事发生在二战时期，要符合战争背景：战火纷飞、物资短缺、流离失所、敌占区生活。不要出现战后的事物。",
+        "scifi": "故事发生在未来科幻世界：星际旅行、人工智能、太空殖民地、基因改造、赛博空间等。",
+        "xianxia": "故事发生在修真世界：修仙门派、灵根资质、丹药法器、飞升渡劫、门派争斗、天地灵气。",
+        "fantasy": "故事发生在魔法大陆：精灵、矮人、兽人、魔法公会、巨龙、剑与魔法的奇幻世界。",
+        "hp": "故事发生在哈利波特魔法世界：霍格沃茨魔法学校、魁地奇比赛、飞天扫帚、魔杖、巫师麻瓜。",
+        "wuxia": "故事发生在武侠江湖：武林门派、江湖恩怨、轻功内功、江湖规矩、侠客义气。",
+        "custom": f"故事发生在自定义世界：{world}。严格按照这个世界设定的规则来生成事件。"
+    }
+
+    world_text = world_constraints.get(world, world_constraints["modern"])
+    
     stats_text = " ".join([f"{labels[k]}:{v}" for k, v in stats.items()])
     
-    # 近期历史（最近5条）
     recent = history[-5:] if history else ["刚成年"]
     history_text = "\n".join([f"- {h}" for h in recent])
 
     prompt = (
         f"你是一个人生模拟游戏的事件生成器。\n\n"
+        f"【世界设定】{world_text}\n\n"
         f"当前角色状态：\n"
         f"- 年龄：{age}岁\n"
         f"- 属性：{stats_text}\n\n"
         f"最近经历：\n{history_text}\n\n"
-        "你必须生成一个多样化的人生事件。事件类型包括：\n"
+        "你必须生成一个符合上述世界设定的人生事件。事件类型包括：\n"
         "- 学业/教育：高考、考研、出国、留学、专业选择\n"
         "- 事业/工作：求职、升职、加薪、跳槽、创业、失业\n"
         "- 爱情/婚姻：邂逅、恋爱、表白、结婚、分手、离婚\n"
@@ -94,11 +110,11 @@ def build_event_prompt(age, stats, history):
         "- 财务/投资：彩票中奖、投资亏损、意外收入、财务危机\n"
         "- 健康/生活：作息紊乱、身体报警、养成习惯、戒除恶习\n\n"
         "要求：\n"
-        "1. 不要连续生成同一类型事件（查看最近经历避免重复）\n"
-        "2. 选项数量由你决定（1-5个），根据事件复杂度灵活设置\n"
-        "3. 每个选项描述要具体真实，不要泛泛而谈\n"
-        "4. 选项可以只影响后续剧情，不一定有属性变化\n"
-        "5. 选项可以有无关属性的（如只是休闲选择）\n"
+        "1. 事件必须严格符合【世界设定】，不得出现该世界不应存在的事物\n"
+        "2. 不要连续生成同一类型事件（查看最近经历避免重复）\n"
+        "3. 选项数量由你决定（1-5个），根据事件复杂度灵活设置\n"
+        "4. 每个选项描述要具体真实，符合世界背景\n"
+        "5. 选项可以只影响后续剧情，不一定有属性变化\n"
         "6. 事件描述要50-80字，有画面感\n\n"
         "输出严格的JSON格式，不要有任何前缀或解释：\n"
         "{\"event\": \"事件描述...\",\n"
@@ -113,10 +129,25 @@ def build_event_prompt(age, stats, history):
     return prompt
 
 
-def build_history_prompt(age, gender, stats):
+def build_history_prompt(age, gender, stats, world="modern"):
     gender_text = "男性" if gender == "male" else ("女性" if gender == "female" else "中性")
 
-    prompt = f"""为一个{gender_text}角色生成一段初始背景故事，25-40字，要有特点。
+    # 世界设定的简要描述
+    world_brief = {
+        "tang": "唐朝长安",
+        "ming": "明朝市井",
+        "wwii": "二战时期",
+        "scifi": "未来科幻",
+        "xianxia": "修真世界",
+        "fantasy": "魔法大陆",
+        "hp": "哈利波特魔法世界",
+        "wuxia": "武侠江湖",
+        "custom": "自定义世界",
+        "modern": "现代都市"
+    }
+    world_text = world_brief.get(world, "现代都市")
+
+    prompt = f"""为一个{gender_text}角色生成一段初始背景故事，25-40字，要有特点。故事发生在{world_text}。
 
 当前状态：
 - 年龄：{age}岁
@@ -165,8 +196,9 @@ def generate_event():
     age = data.get("age", 18)
     stats = data.get("stats", {})
     history = data.get("history", [])
+    world = data.get("world", "modern")
 
-    prompt = build_event_prompt(age, stats, history)
+    prompt = build_event_prompt(age, stats, history, world)
 
     try:
         raw = call_llm([
@@ -199,8 +231,9 @@ def generate_history():
     age = data.get("age", 18)
     gender = data.get("gender", "male")
     stats = data.get("stats", {})
+    world = data.get("world", "modern")
 
-    prompt = build_history_prompt(age, gender, stats)
+    prompt = build_history_prompt(age, gender, stats, world)
 
     try:
         result = call_llm([

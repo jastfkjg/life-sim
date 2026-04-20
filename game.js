@@ -7,6 +7,7 @@ let gameState = {
     name: "",
     gender: "",
     age: 18,
+    world: "",
     stats: {
         hp: 50,          // 健康 0-100 归0死亡
         money: 50,       // 金钱 0-100
@@ -48,9 +49,13 @@ function startGame() {
         return;
     }
 
+    const worldSelect = $("world-select").value;
+    const worldCustom = $("world-custom").value.trim();
+    
     gameState.name = name;
     gameState.gender = gender;
     gameState.age = age;
+    gameState.world = worldSelect === "custom" ? worldCustom : worldSelect;
     gameState.stats = {
         hp: 50, money: 50, happiness: 50, career: 30, social: 30,
         family: 20, friends: 30, love: 0, loneliness: 20, freedom: 60,
@@ -118,6 +123,7 @@ async function nextTurn() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 age: gameState.age,
+                world: gameState.world,
                 stats: gameState.stats,
                 history: gameState.history
             })
