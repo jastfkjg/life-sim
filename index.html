@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人生模拟器 - Life Sim</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 开始界面 -->
+        <div id="start-screen" class="screen active">
+            <h1>🎲 人生模拟器</h1>
+            <p class="subtitle">LLM驱动的人生选择游戏</p>
+            
+            <div class="start-form">
+                <h3>选择世界</h3>
+                <div class="world-selector">
+                    <select id="world-select">
+                        <option value="modern">🌐 现代都市</option>
+                        <option value="tang">🏯 唐朝盛世</option>
+                        <option value="ming">🏯 明朝风云</option>
+                        <option value="wwii">⚔️ 二战时期</option>
+                        <option value="scifi">🚀 未来科幻</option>
+                        <option value="xianxia">✨ 修真世界</option>
+                        <option value="fantasy">🧙 魔法大陆</option>
+                        <option value="hp">⚡ 哈利波特</option>
+                        <option value="wuxia">⚔️ 武侠江湖</option>
+                        <option value="custom">✏️ 自定义世界</option>
+                    </select>
+                    <input type="text" id="world-custom" class="hidden" placeholder="描述你的世界设定..." maxlength="200">
+                </div>
+
+                <h3>创建角色</h3>
+                <input type="text" id="player-name" placeholder="你的名字" maxlength="20">
+                <select id="player-gender">
+                    <option value="male">男</option>
+                    <option value="female">女</option>
+                    <option value="other">其他</option>
+                </select>
+                <input type="number" id="player-age" placeholder="起始年龄 (18-30)" min="18" max="30" value="18">
+                <button onclick="startGame()">开始人生</button>
+            </div>
+        </div>
+
+        <!-- 世界介绍界面 -->
+        <div id="intro-screen" class="screen">
+            <h2 id="world-title">世界设定加载中...</h2>
+            <p id="world-desc" class="world-desc"></p>
+            <button onclick="confirmWorld()">进入这个世界 ▶</button>
+        </div>
+
+        <!-- 游戏界面 -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <div class="profile">
+                    <span id="character-name" class="char-name"></span>
+                    <span id="character-age" class="char-age"></span>
+                    <span id="world-tag" class="world-tag"></span>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-row">
+                        <div class="stat" title="健康 (归0死亡)">
+                            <span class="stat-icon">💚</span>
+                            <span class="stat-label">健康</span>
+                            <div class="stat-bar-wrap"><div id="hp-bar" class="bar health"></div></div>
+                            <span id="hp-val" class="stat-val">50</span>
+                        </div>
+                        <div class="stat" title="金钱">
+                            <span class="stat-icon">💰</span>
+                            <span class="stat-label">金钱</span>
+                            <div class="stat-bar-wrap"><div id="money-bar" class="bar money"></div></div>
+                            <span id="money-val" class="stat-val">50</span>
+                        </div>
+                        <div class="stat" title="快乐">
+                            <span class="stat-icon">😊</span>
+                            <span class="stat-label">快乐</span>
+                            <div class="stat-bar-wrap"><div id="happiness-bar" class="bar happiness"></div></div>
+                            <span id="happiness-val" class="stat-val">50</span>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat" title="事业">
+                            <span class="stat-icon">📈</span>
+                            <span class="stat-label">事业</span>
+                            <div class="stat-bar-wrap"><div id="career-bar" class="bar career"></div></div>
+                            <span id="career-val" class="stat-val">30</span>
+                        </div>
+                        <div class="stat" title="社交">
+                            <span class="stat-icon">🤝</span>
+                            <span class="stat-label">社交</span>
+                            <div class="stat-bar-wrap"><div id="social-bar" class="bar social"></div></div>
+                            <span id="social-val" class="stat-val">30</span>
+                        </div>
+                        <div class="stat" title="家庭 (结婚/子女)">
+                            <span class="stat-icon">👨‍👩‍👧</span>
+                            <span class="stat-label">家庭</span>
+                            <div class="stat-bar-wrap"><div id="family-bar" class="bar family"></div></div>
+                            <span id="family-val" class="stat-val">20</span>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat" title="朋友">
+                            <span class="stat-icon">👯</span>
+                            <span class="stat-label">朋友</span>
+                            <div class="stat-bar-wrap"><div id="friends-bar" class="bar friends"></div></div>
+                            <span id="friends-val" class="stat-val">30</span>
+                        </div>
+                        <div class="stat" title="爱情">
+                            <span class="stat-icon">💕</span>
+                            <span class="stat-label">爱情</span>
+                            <div class="stat-bar-wrap"><div id="love-bar" class="bar love"></div></div>
+                            <span id="love-val" class="stat-val">0</span>
+                        </div>
+                        <div class="stat" title="孤独 (高不好)">
+                            <span class="stat-icon">🌙</span>
+                            <span class="stat-label">孤独</span>
+                            <div class="stat-bar-wrap"><div id="loneliness-bar" class="bar loneliness"></div></div>
+                            <span id="loneliness-val" class="stat-val">20</span>
+                        </div>
+                        <div class="stat" title="自由">
+                            <span class="stat-icon">🦅</span>
+                            <span class="stat-label">自由</span>
+                            <div class="stat-bar-wrap"><div id="freedom-bar" class="bar freedom"></div></div>
+                            <span id="freedom-val" class="stat-val">60</span>
+                        </div>
+                        <div class="stat" title="精神 (归0自杀)">
+                            <span class="stat-icon">🧠</span>
+                            <span class="stat-label">精神</span>
+                            <div class="stat-bar-wrap"><div id="sanity-bar" class="bar sanity"></div></div>
+                            <span id="sanity-val" class="stat-val">70</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="event-container">
+                <div id="event-text" class="event-text">正在加载人生事件...</div>
+                <div id="choices-container" class="choices"></div>
+            </div>
+
+            <div class="history-log">
+                <button id="toggle-history" onclick="toggleHistory()">📜 人生轨迹</button>
+                <div id="history-panel" class="history-panel hidden">
+                    <ul id="history-list"></ul>
+                </div>
+            </div>
+
+            <button id="continue-btn" class="hidden" onclick="nextTurn()">继续 ▶</button>
+        </div>
+
+        <!-- 结束界面 -->
+        <div id="end-screen" class="screen">
+            <h2 id="end-title">人生落幕</h2>
+            <div id="end-stats" class="end-stats"></div>
+            <div id="end-summary" class="end-summary"></div>
+            <button onclick="restartGame()">重新开始</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
