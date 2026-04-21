@@ -3,6 +3,17 @@
 // 获取当前页面的origin，用于API请求
 const API_URL = window.location.origin + "/api";
 
+// 随机名字库
+const MALE_NAMES = ["子龙", "云飞", "清风", "逸尘", "浩然", "天明", "承志", "靖远", "文渊", "思远", "修文", "锦书", "明德", "致远", "博远", "承轩", "鸿飞", "鹏举", "天翔", "凌霄", "云帆", "南风", "东阳", "北辰", "西岳"];
+const FEMALE_NAMES = ["诗涵", "雨萱", "思琪", "雅静", "晓雪", "依琳", "芷若", "凝霜", "诗韵", "梦璃", "婉儿", "清婉", "娉婷", "玉珍", "雪晴", "灵犀", "采薇", "映雪", "秋水", "春华", "夏荷", "冬梅", "紫烟", "碧落", "红药"];
+
+function generateRandomName() {
+    const gender = $("player-gender").value;
+    const names = gender === "female" ? FEMALE_NAMES : MALE_NAMES;
+    const name = names[Math.floor(Math.random() * names.length)];
+    $("player-name").value = name;
+}
+
 let gameState = {
     name: "",
     gender: "",

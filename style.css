@@ -154,6 +154,41 @@ body::before {
     transition: all 0.3s;
 }
 
+.name-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.name-input-row input {
+    flex: 1;
+    height: 54px;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+#random-name-btn {
+    width: 54px;
+    height: 54px;
+    padding: 0;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    font-size: 1.3em;
+    cursor: pointer;
+    transition: all 0.3s;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#random-name-btn:hover {
+    background: rgba(255,107,157,0.2);
+    border-color: #ff6b9d;
+}
+
 .start-form input::placeholder {
     color: #666;
 }
