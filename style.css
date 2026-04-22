@@ -157,19 +157,20 @@ body::before {
 .name-input-row {
     display: flex;
     gap: 10px;
-    align-items: center;
+    align-items: stretch;
 }
 
 .name-input-row input {
     flex: 1;
-    height: 54px;
+    min-height: 54px;
     padding: 0 16px;
     box-sizing: border-box;
+    margin: 0;
 }
 
 #random-name-btn {
     width: 54px;
-    height: 54px;
+    min-height: 54px;
     padding: 0;
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 14px;
@@ -182,6 +183,8 @@ body::before {
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+    margin: 0;
 }
 
 #random-name-btn:hover {
